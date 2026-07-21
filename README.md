@@ -1,4 +1,4 @@
-# CZ_study_Crucible_Sweep
+
 # CZ melt - crucible rotation study
 
 Reference CFD cases for the Czochralski silicon melt, this time varying the crucible
