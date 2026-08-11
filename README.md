@@ -1,5 +1,6 @@
 
-# CZ melt — crucible rotation study
+# CZ melt 
+crucible rotation study
 
 Reference CFD cases for the Czochralski silicon melt, varying the crucible
 counter-rotation. Twelve steady 2D axisymmetric swirl cases from −1 to −10 rpm,
