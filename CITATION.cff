@@ -5,8 +5,7 @@ abstract: >
   crucible rotation from -1 to -10 rpm across 12 cases. All cases use the
   same anchor point (crystal 8 rpm, crucible -3 rpm, hot wall 1745 K) and
   were checked for convergence, mesh independence, conservation, and physical
-  consistency. The data was generated as reference input for a PINN and
-  surrogate model being developed under the Quasi / SIMD project.
+  consistency.
   Simulated using ANSYS Fluent 2026 R1.
 authors:
   - family-names: Kurisinkal Shine
