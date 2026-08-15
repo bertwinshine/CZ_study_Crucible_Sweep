@@ -173,3 +173,4 @@ certify_case.py    boundary-condition and sanity checks
 
 The ANSYS modelling, the sweep design and the validation are mine. The Python was
 written with AI assistance — I understand what it does and can walk through it.
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21955323.svg)](https://doi.org/10.5281/zenodo.21955323)
