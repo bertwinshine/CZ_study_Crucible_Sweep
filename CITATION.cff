@@ -9,10 +9,10 @@ abstract: >
   surrogate model being developed under the Quasi / SIMD project.
   Simulated using ANSYS Fluent 2026 R1.
 authors:
-  - family-names: Kurisinkal Shine
+    family-names: Kurisinkal Shine
     given-names: Bertwin
-    affiliation: "TU Chemnitz, Faculty of Mechanical Engineering"
-    email: bertwin.kurisinkal-shine@s2021.tu-chemnitz.de
+    Univeristy: Chemnitz university of technology
+    email: bertwinkurisinkalshine@gmail.com
 version: 1.0.0
 date-released: 2026-08-15
 license: CC-BY-4.0
