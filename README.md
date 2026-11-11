@@ -1,6 +1,4 @@
-
-# CZ melt 
-crucible rotation study
+# CZ melt — crucible rotation study
 
 Reference CFD cases for the Czochralski silicon melt, varying the crucible
 counter-rotation. Twelve steady 2D axisymmetric swirl cases from −1 to −10 rpm,
@@ -103,7 +101,7 @@ condition from it, and checks the exported field against them, so a case whose
 setup does not match its label fails rather than entering the dataset unnoticed.
 
 ```
-python certify_case.py steady/*.csv
+python certify_case.py *.csv
 ```
 
 All twelve pass. Typical margins:
@@ -167,10 +165,12 @@ representative model of a real puller.
 ## Files
 
 ```
-steady/            12 certified cases, r,z,u_r,u_z,u_swirl,p,T
-certify_case.py    boundary-condition and sanity checks
+CZ_crucible_m*rpm_steady.csv  12 certified cases, r,z,u_r,u_z,u_swirl,p,T
+certify_case.py               boundary-condition and sanity checks
+CITATION.cff                  how to cite this dataset
 ```
 
 The ANSYS modelling, the sweep design and the validation are mine. The Python was
 written with AI assistance — I understand what it does and can walk through it.
+
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21955323.svg)](https://doi.org/10.5281/zenodo.21955323)
