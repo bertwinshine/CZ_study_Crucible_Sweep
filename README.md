@@ -1,27 +1,47 @@
-# CZ melt — crucible rotation study
+# CZ melt: crucible rotation sweep
 
-Reference CFD cases for the Czochralski silicon melt, varying the crucible
-counter-rotation. Twelve steady 2D axisymmetric swirl cases from −1 to −10 rpm,
-everything else held fixed. Meant as ground-truth data for the surrogate/PINN
-model.
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21955323.svg)](https://doi.org/10.5281/zenodo.21955323)
 
-Each case is a full converged field on a common mesh, exported as
-`r, z, u_r, u_z, u_swirl, p, T` at 8181 nodes. Every case is checked against the
-boundary conditions it should have been run with before it enters the dataset —
-`certify_case.py` does that and all twelve pass.
+Twelve steady CFD cases of a Czochralski (CZ) silicon melt, with the crucible
+counter-rotation varied from −1 to −10 rpm and everything else held fixed. I
+made them as reference data for a surrogate / PINN model.
 
-## What varies
+Each case is a converged 2D axisymmetric swirl solution exported on the same
+8181-node mesh with the columns `r, z, u_r, u_z, u_swirl, p, T`.
 
-Only the crucible rotation. The crystal stays at its baseline +8 rpm and the
-crucible wall stays at 1745 K.
+The −3 rpm case is the shared anchor of the three sweeps. It is the same field
+as the 8 rpm case in [CZ_Crystal_Sweep](https://github.com/bertwinshine/CZ_Crystal_Sweep)
+and the 1745 K case in [CZ_Study_TempChange](https://github.com/bertwinshine/CZ_Study_TempChange).
 
-Because the free surface sits between the crystal and the crucible wall, its
-prescribed swirl has to follow the crucible speed — it ramps linearly from the
-crystal edge value to whatever the crucible wall is turning at. So each case
-changes two coupled things: the crucible wall condition and the outer end of the
-free-surface ramp.
+## Setup
 
-| rpm | ω (rad/s) | free-surface swirl at r = 0.30 |
+Geometry and boundary conditions follow Huang et al., AIP Advances 15, 105202
+(2025), https://doi.org/10.1063/5.0271778.
+
+Crucible radius 0.30 m, crystal radius 0.18 m, melt height 0.15 m.
+
+| Zone | Thermal | Momentum |
+|---|---|---|
+| Crystal face | 1685 K | rotational, 0.837758 rad/s (+8 rpm) |
+| Crucible wall | 1745 K | rotational, ω per case |
+| Crucible bottom | `1700 + (r/0.30)·(1745−1700)` K | rotational, ω per case |
+| Free surface | `1685 + ((r−0.18)/0.12)·(1745−1685)` K | swirl ramp, see below |
+| Axis | | axis |
+
+Solver: ANSYS Fluent 2026 R1 Student, 2D axisymmetric swirl, laminar, energy on,
+Boussinesq (operating temperature 1717 K), gravity −9.81 in x, coupled
+pressure-velocity, second-order discretisation, automatic pseudo time step.
+
+The free-surface swirl is a linear ramp from the crystal edge speed to the
+crucible wall speed. In this sweep the outer end follows the crucible, so each
+case changes both the crucible wall and the ramp:
+
+```
+0.150796 [m/s] + ((RadialCoordinate - 0.18 [m]) / (0.30 [m] - 0.18 [m]))
+                 * (OUTER [m/s] - 0.150796 [m/s])
+```
+
+| rpm | ω (rad/s) | OUTER, swirl at r = 0.30 (m/s) |
 |---:|---:|---:|
 | −1 | −0.104720 | −0.031416 |
 | −2 | −0.209440 | −0.062832 |
@@ -36,32 +56,9 @@ free-surface ramp.
 | −8 | −0.837758 | −0.251327 |
 | −10 | −1.047198 | −0.314159 |
 
-Free-surface swirl expression, with the last value taken from the table:
+## Results
 
-```
-0.150796 [m/s] + ((RadialCoordinate - 0.18 [m]) / (0.30 [m] - 0.18 [m]))
-                 * (OUTER [m/s] - 0.150796 [m/s])
-```
-
-## Case setup
-
-Geometry: crucible radius 0.30 m, crystal radius 0.18 m, melt height 0.15 m.
-
-| Zone | Thermal | Momentum |
-|---|---|---|
-| Crystal face | 1685 K | rotational, 0.837758 rad/s (+8 rpm) |
-| Crucible wall | 1745 K | rotational, ω per case |
-| Crucible bottom | `1700 + (r/0.30)·(1745−1700)` K | rotational, ω per case |
-| Free surface | `1685 + ((r−0.18)/0.12)·(1745−1685)` K | swirl ramp, see above |
-| Axis | — | axis |
-
-Solver: 2D axisymmetric swirl, laminar, energy on, Boussinesq with operating
-temperature 1717 K, gravity in x = −9.81, coupled pressure–velocity, second-order
-discretisation, automatic pseudo time step. ANSYS Fluent 2026 R1 Student.
-
-## What the sweep shows
-
-There is a **minimum in mean velocity near −4 rpm**.
+Mean velocity has a minimum near −4 rpm:
 
 | crucible rpm | mean \|u\| (m/s) | max \|u\| (m/s) | p range (Pa) |
 |---:|---:|---:|---:|
@@ -69,7 +66,7 @@ There is a **minimum in mean velocity near −4 rpm**.
 | −2 | 0.002880 | 0.010987 | 13.44 |
 | −3 | 0.002598 | 0.009498 | 14.94 |
 | −3.5 | 0.002495 | 0.008499 | 16.08 |
-| **−4** | **0.002457** | **0.008462** | 17.51 |
+| −4 | 0.002457 | 0.008462 | 17.51 |
 | −4.5 | 0.002507 | 0.009106 | 19.28 |
 | −5 | 0.002641 | 0.010312 | 21.37 |
 | −5.5 | 0.002841 | 0.011638 | 23.97 |
@@ -78,33 +75,30 @@ There is a **minimum in mean velocity near −4 rpm**.
 | −8 | 0.004775 | 0.019363 | 42.60 |
 | −10 | 0.006683 | 0.025744 | 63.02 |
 
-Velocity falls as counter-rotation increases to −4 rpm, then rises. The −3.5 and
-−4.5 cases were run specifically to test whether that was real or a single-point
-artefact — both came out above −4, and a parabola through the three central
-points puts the vertex at −3.96 rpm with positive curvature. The maximum velocity
-agrees independently, with its own vertex at −3.78 rpm.
+I added the −3.5 and −4.5 rpm cases to check that the minimum was real and not
+a single odd point. Both came out higher than −4 rpm. A parabola through the
+three middle points has its vertex at −3.96 rpm; the same fit on max velocity
+gives −3.78 rpm.
 
-The pressure range rises monotonically across the whole sweep, so the minimum is
-in the flow structure rather than in the driving force. The reading is that
-increasing counter-rotation first opposes and partially cancels the
-buoyancy-driven cell, and past about −4 rpm starts to drive the flow itself.
+The pressure range keeps rising across the sweep, so the minimum is in the flow
+pattern and not in the driving force. My reading is that counter-rotation first
+works against the buoyancy cell and partly cancels it, and beyond about −4 rpm
+it starts driving the flow itself.
 
-It is a smooth minimum, not a discontinuity. The cross-case correlation of `u_r`
-between adjacent cases stays above 0.95 through the middle of the sweep. But the
-two ends really are different flow structures: `u_r` at −1 rpm correlates at
-−0.243 with −10 rpm. The change between them is gradual, not abrupt.
+The change is gradual. The correlation of `u_r` between neighbouring cases stays
+above 0.95 through the middle of the sweep, while −1 and −10 rpm correlate at
+−0.243, so the two ends are different flow patterns.
 
 ## Certification
 
-`certify_case.py` reads the rpm from the filename, re-derives every boundary
-condition from it, and checks the exported field against them, so a case whose
-setup does not match its label fails rather than entering the dataset unnoticed.
+`certify_case.py` reads the rpm from the file name, works out every boundary
+condition from it and checks the exported field against them.
 
 ```
 python certify_case.py *.csv
 ```
 
-All twelve pass. Typical margins:
+All twelve cases pass. Typical margins:
 
 | check | typical |
 |---|---|
@@ -113,64 +107,56 @@ All twelve pass. Typical margins:
 | free-surface swirl ramp | max err ~1.5e-4 m/s |
 | crystal face swirl | 0.06 % of edge speed |
 | free-surface / bottom thermal ramps | < 0.03 K |
-| axis symmetry, max \|u_r\| on axis | 0.11 – 0.24 % of field max |
+| max \|u_r\| on axis | 0.11 to 0.24 % of field max |
 
-Two things the checks are deliberately tolerant about, both understood:
+The axis check (radial velocity must be zero on the axis) also catches a swapped
+`u_r` / `u_z` column, which Fluent sometimes does on export.
 
-- **The corner node at r = 0.18** is shared between the crystal face and the free
-  surface, and the solver blends the two conditions there. It reads 0.147044
-  instead of 0.150796 for swirl and 1685.55 instead of 1685 for temperature. It
-  is excluded from the ramp checks rather than being treated as an error.
-- **The −3 rpm case** was set up with ω rounded to −0.3141 rather than
-  −0.3141593, so its wall swirl is 0.05 % off the exact value. The velocity
-  checks are relative and print the percentage, so this shows in the output
-  rather than being hidden. It is well inside anything that matters physically,
-  but it is a real record of how that case was configured.
+Two known deviations are tolerated:
 
-The axis-symmetry check is worth singling out. On the symmetry axis the radial
-velocity has to vanish — that is a consequence of axisymmetry, not a numerical
-tolerance — and the same check catches a `u_r`/`u_z` column transposition at
-export time, which is otherwise invisible field by field.
+- The corner node at r = 0.18 belongs to both the crystal face and the free
+  surface. Fluent blends the two conditions there (swirl 0.147044 instead of
+  0.150796, T 1685.55 K instead of 1685 K), so it is left out of the ramp checks.
+- The −3 rpm case was set up with ω = −0.3141 instead of −0.3141593, so its wall
+  swirl is 0.05 % off. The script prints this. It has no physical effect.
 
 ## Reduced-order model
 
-The sweep is close to low-rank: one POD mode captures 99.96 % of the swirl energy
+The sweep is close to low rank. One POD mode holds 99.96 % of the swirl energy
 and 99.6 % of the pressure energy; `u_r` and `u_z` need two modes for 99 %.
 
-A POD + RBF surrogate over the twelve cases, validated leave-one-out, gives (mean
-over interior cases, as % of each field's range):
+POD + RBF surrogate, leave-one-out error over the interior cases, as % of each
+field's range:
 
 | u_r | u_z | u_swirl | p | T |
 |---|---|---|---|---|
 | 0.225 % | 0.267 % | 0.043 % | 0.469 % | 0.245 % |
 
-Holding out an endpoint instead is extrapolation and behaves accordingly — −1 rpm
-gives 12.5 % on pressure, −10 rpm gives 6.0 %. **The model interpolates inside
-−1 to −10 rpm and should not be used outside it.**
+Holding out an end point is extrapolation: −1 rpm gives 12.5 % on pressure and
+−10 rpm gives 6.0 %. Only use the model between −1 and −10 rpm.
 
-## Scope and limits
+## Limitations
 
-- Laminar, Boussinesq, steady, prescribed free surface. No turbulence model, no
-  radiation, no Marangoni convection, no species transport, no magnetic field.
+- Laminar, Boussinesq, steady. No turbulence model, radiation, Marangoni
+  convection, species transport or magnetic field.
 - The free surface is a prescribed wall, not a solved meniscus.
-- One parameter varies. Crucible rotation is swept; hot-wall temperature and
-  crystal rotation are held at 1745 K and +8 rpm. Nothing here says anything
-  about how those parameters interact — that needs cases where more than one
-  moves at a time.
+- Only crucible rotation changes. Hot wall (1745 K) and crystal (+8 rpm) are
+  fixed, so the data says nothing about interactions between parameters.
 - Student-licence mesh, 8181 nodes.
 
-This is a benchmark dataset for method development, not an industrially
-representative model of a real puller.
+This is a benchmark for method development, not a model of a real CZ puller.
 
 ## Files
 
 ```
-CZ_crucible_m*rpm_steady.csv  12 certified cases, r,z,u_r,u_z,u_swirl,p,T
+CZ_crucible_m*rpm_steady.csv  12 cases, r,z,u_r,u_z,u_swirl,p,T
 certify_case.py               boundary-condition and sanity checks
-CITATION.cff                  how to cite this dataset
+CITATION.cff                  citation info
 ```
 
-The ANSYS modelling, the sweep design and the validation are mine. The Python was
-written with AI assistance — I understand what it does and can walk through it.
+## Credit
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21955323.svg)](https://doi.org/10.5281/zenodo.21955323)
+The ANSYS setup, sweep design and validation are my work. I wrote the Python
+with help from an AI assistant and have checked and understand all of it.
+
+Bertwin Kurisinkal Shine, TU Chemnitz

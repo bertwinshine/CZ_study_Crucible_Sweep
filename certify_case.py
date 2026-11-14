@@ -1,14 +1,9 @@
 #!/usr/bin/env python3
 """
-certify_case.py
-===============
+Check CZ crucible-rotation cases against their boundary conditions.
 
-Checks one exported CZ crucible-sweep case against the boundary conditions it
-was supposed to have been run with, plus the physical sanity tests.
-
-The crucible rotation is read from the filename, so a file that was exported
-from the wrong case, or run with a boundary condition that did not track the
-swept parameter, fails here rather than silently entering the dataset.
+The crucible rpm is read from the file name and the boundary conditions are
+worked out from it.
 
 Usage:
     python certify_case.py steady/CZ_crucible_m5rpm_steady.csv
@@ -16,7 +11,7 @@ Usage:
 
 Expected schema: r, z, u_r, u_z, u_swirl, p, T   (8181 rows)
 
-Author: Bertwin Kurisinkal Shine
+Bertwin Kurisinkal Shine, TU Chemnitz. Written with help from an AI assistant.
 """
 
 import sys
@@ -29,7 +24,7 @@ import pandas as pd
 R_CRU   = 0.30        # crucible radius (m)
 R_CRY   = 0.18        # crystal radius (m)
 Z_TOP   = 0.15        # melt height (m)
-OM_CRY  = 0.837758    # crystal rotation, +8 rpm (rad/s) -- fixed in this sweep
+OM_CRY  = 0.837758    # crystal rotation, +8 rpm (rad/s), fixed in this sweep
 T_CRY   = 1685.0      # crystal face temperature (K)
 T_HOT   = 1745.0      # crucible wall temperature (K)
 T_BOT_0 = 1700.0      # crucible bottom temperature at the axis (K)
@@ -76,9 +71,7 @@ def certify(path):
     axis = d[d.r < 1e-9]
 
     # --- swirl boundary conditions -----------------------------------------
-    # These are the checks that catch a free surface frozen at baseline while
-    # the swept parameter moved. The corner node at r = R_CRY is shared with
-    # the crystal face and is blended by the solver, so it is excluded.
+    # corner node at r = R_CRY is blended by the solver, so it is excluded
     e = np.abs(wall.u_swirl - v_outer).max()
     add("crucible_wall swirl", e / abs(v_outer) < TOL_REL,
         "max err %.2e = %.4f %%  (target %+.6f)" % (e, 100 * e / abs(v_outer), v_outer))
@@ -113,9 +106,7 @@ def certify(path):
     add("T within bounds", ok, "%.2f - %.2f K" % (d["T"].min(), d["T"].max()))
 
     # --- physical sanity ----------------------------------------------------
-    # On the symmetry axis the radial velocity must vanish. This is a
-    # consequence of axisymmetry, not a numerical tolerance. It is also the
-    # check that catches a u_r / u_z column transposition at export time.
+    # u_r must be zero on the axis; also catches swapped u_r / u_z columns
     ratio = 100 * np.abs(axis.u_r).max() / np.abs(d.u_r).max()
     add("axis symmetry (u_r -> 0)", ratio < TOL_AXIS,
         "%.3f %% of field max" % ratio)
