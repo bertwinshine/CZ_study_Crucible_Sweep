@@ -1,5 +1,7 @@
 # CZ melt: crucible rotation sweep
 
+> **Superseded by [CZ-Dataset-Doe](https://github.com/bertwinshine/CZ-Dataset-Doe).** These cases were stopped at Fluent's default residual target of 1e-3. Rerun to 1e-6 with the same settings, the velocity fields differ by typically 1 to 5 %, up to about 11 % for a few cases. This repository stays online unchanged as version 1.
+
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21955323.svg)](https://doi.org/10.5281/zenodo.21955323)
 
 Twelve steady CFD cases of a Czochralski (CZ) silicon melt, with the crucible
